@@ -5,6 +5,7 @@ from pytube import YouTube
 import ttkbootstrap as ttk
 from PIL import Image, ImageTk
 from os import path
+import re
 
 
 class Menu():
@@ -36,48 +37,47 @@ class Menu():
 
         def exec_botao():
             try:
+                # Definindo o diretório padrão se não especificado
                 if not self.dire.get():
                     self.dire.set('.')
+                    messagebox.showinfo('Aviso', 'Nenhum diretório especificado. Usando diretório atual.')
 
                 url = self.entry_url.get().strip()
-
                 formato = self.combobox.get()
 
-                if formato[-1] == ')':
-                    formato = formato[:5].strip()
+                # Extrair o formato corretamente usando expressões regulares
+                formato_match = re.match(r"(.+?)\s*\(\d+p\)", formato)
+                if formato_match:
+                    formato = formato_match.group(1).strip()
 
+                yt = YouTube(url)
+                file_extension = 'mp3' if formato == 'Mp3' else 'webm'
+                try:
+                    file_name = f"{yt.title} ({formato}).{file_extension}"
+                except Exception as err:
+                    messagebox.showerror('[ERRO!]', 'Caracteres inválidos no titulo'+err)
+                file_path = f'{self.dire.get()}/{file_name}'
+                
                 if self.so_audio.get():
-                    yt = YouTube(url)
                     streams = yt.streams.filter(only_audio=True).first()
-
-                    if formato == 'Mp3':
-                        streams.download(filename=f'{yt.title} ({formato}).mp3', output_path=self.dire.get())
-                    elif formato == 'Webm':
-                        streams.download(filename=f'{yt.title} ({formato}).webm', output_path=self.dire.get())
-
-                    if path.exists(f'{self.dire.get()}\\{yt.title} ({formato}).mp3') or path.exists(f'{self.dire.get()}\\{yt.title} ({formato}).webm'):
-                        messagebox.showinfo('Sucesso!', f'O vídeo {yt.title} foi baixado com sucesso!')
-                    else:
-                        messagebox.showwarning('[AVISO]', 'Essa resolução não esta disponível para esse vídeo')
+                    streams.download(filename=file_name, output_path=self.dire.get())
                 else:
-                    yt = YouTube(url)
-
                     videos_streams = yt.streams.filter(res=formato)
-
                     for stream in videos_streams:
-                        try:
-                            stream.download(filename=(f'{yt.title} ({formato}).mp4'), output_path=self.dire.get())
-                        except Exception as err:
-                            messagebox.showerror('[ERRO]', err)
-                        
-                    if path.exists(f'{self.dire.get()}\\{yt.title} ({formato}).mp4'):
-                        messagebox.showinfo('Sucesso!', f'O vídeo {yt.title} foi baixado com sucesso!')
-                    else:
-                        messagebox.showwarning('[AVISO]', 'Essa resolução não esta disponível para esse vídeo') 
+                        file_name = f"{yt.title} ({formato}).mp4"
+                        stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+
+                # Verificar se o arquivo foi baixado com sucesso
+                print(f'{self.dire.get()}/{file_name}')
+                if path.exists(f'{self.dire.get()}/{file_name}'):
+                    messagebox.showinfo('Sucesso!', f'O vídeo {yt.title} foi baixado com sucesso em {file_path}!')
+                else:
+                    messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo {yt.title} na resolução {formato}.')
+            
             except IndexError:
                 messagebox.showerror('[ERRO]', 'Insira uma resolução!')
             except Exception as err:
-                messagebox.showerror('[ERRO]', f'Erro ao acessar o link!')
+                messagebox.showerror('[ERRO]', f'Erro ao acessar o link! {err}')
             
 
         self.janela = tk.Tk()
@@ -99,7 +99,7 @@ class Menu():
         self.entry_url = ttk.Entry(self.janela,
                                    bootstyle='dark',
                                    width=62)
-        self.entry_url.place(x=90, y=143)
+        self.entry_url.place(x=100, y=143)
 
         estilo = ttk.Style()
         estilo.configure('dark.TButton', font=(self.FONTE_TEXT, 22), width=10)
@@ -130,7 +130,7 @@ class Menu():
         self.dire = tk.StringVar()
         ttk.Entry(bootstyle='dark',
                 textvariable=self.dire,
-                width=40).place(x=140, y=255)
+                width=40).place(x=150, y=255)
 
         tk.Button(self.janela,
                 text='Escolher',
