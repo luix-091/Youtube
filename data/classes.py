@@ -40,39 +40,30 @@ class Menu():
                 # Definindo o diretório padrão se não especificado
                 if not self.dire.get():
                     self.dire.set('.')
-                    messagebox.showinfo('Aviso', 'Nenhum diretório especificado. Usando diretório atual.')
 
                 url = self.entry_url.get().strip()
                 formato = self.combobox.get()
 
-                # Extrair o formato corretamente usando expressões regulares
-                formato_match = re.match(r"(.+?)\s*\(\d+p\)", formato)
-                if formato_match:
-                    formato = formato_match.group(1).strip()
+                if '(' in formato:
+                    formato = formato[0:formato.index('(')-1]
 
                 yt = YouTube(url)
-                file_extension = 'mp3' if formato == 'Mp3' else 'webm'
-                try:
-                    file_name = f"{yt.title} ({formato}).{file_extension}"
-                except Exception as err:
-                    messagebox.showerror('[ERRO!]', 'Caracteres inválidos no titulo'+err)
-                file_path = f'{self.dire.get()}/{file_name}'
-                
+
                 if self.so_audio.get():
-                    streams = yt.streams.filter(only_audio=True).first()
-                    streams.download(filename=file_name, output_path=self.dire.get())
+                    file_name = f"{yt.title} ({formato}).mp3" if formato == 'Mp3' else f"{yt.title} ({formato}).webm"
+                    stream = yt.streams.filter(only_audio=True).first()
+                    stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+
                 else:
-                    videos_streams = yt.streams.filter(res=formato)
-                    for stream in videos_streams:
-                        file_name = f"{yt.title} ({formato}).mp4"
-                        stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+                    file_name = f"{yt.title} ({formato}).mp4"
+                    stream = yt.streams.filter(res=formato).first()
+                    stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
 
                 # Verificar se o arquivo foi baixado com sucesso
-                print(f'{self.dire.get()}/{file_name}')
                 if path.exists(f'{self.dire.get()}/{file_name}'):
-                    messagebox.showinfo('Sucesso!', f'O vídeo {yt.title} foi baixado com sucesso em {file_path}!')
+                    messagebox.showinfo('Sucesso!', f'O vídeo -> {yt.title} foi baixado com sucesso em -> {self.dire.get()}!')
                 else:
-                    messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo {yt.title} na resolução {formato}.')
+                    messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo -> {yt.title} na resolução -> {formato}.\nTente outra resolução!')
             
             except IndexError:
                 messagebox.showerror('[ERRO]', 'Insira uma resolução!')
