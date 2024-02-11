@@ -52,18 +52,22 @@ class Menu():
                 if self.so_audio.get():
                     file_name = f"{yt.title} ({formato}).mp3" if formato == 'Mp3' else f"{yt.title} ({formato}).webm"
                     stream = yt.streams.filter(only_audio=True).first()
-                    stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+                    try:
+                        stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+                    except AttributeError:
+                        messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo -> {yt.title} na resolução -> {formato}.\nTente outra resolução!')
 
                 else:
                     file_name = f"{yt.title} ({formato}).mp4"
                     stream = yt.streams.filter(res=formato).first()
-                    stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+                    try:
+                        stream.download(filename=file_name, output_path=f'{self.dire.get()}/')
+                    except AttributeError:
+                        messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo -> {yt.title} na resolução -> {formato}.\nTente outra resolução!')
 
                 # Verificar se o arquivo foi baixado com sucesso
                 if path.exists(f'{self.dire.get()}/{file_name}'):
-                    messagebox.showinfo('Sucesso!', f'O vídeo -> {yt.title} foi baixado com sucesso em -> {self.dire.get()}!')
-                else:
-                    messagebox.showwarning('Aviso', f'Não foi possível baixar o vídeo -> {yt.title} na resolução -> {formato}.\nTente outra resolução!')
+                    messagebox.showinfo('Sucesso!', f'O vídeo -> {yt.title} foi baixado com sucesso em -> {self.dire.get()}!')                
             
             except IndexError:
                 messagebox.showerror('[ERRO]', 'Insira uma resolução!')
